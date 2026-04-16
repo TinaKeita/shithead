@@ -20,6 +20,7 @@ class GameController extends Controller
         return redirect('/game');
     }
 
+    // ai gājiens kad netiek veikts cilvēka gājiens
     public function game()
     {
         $game = session('game');

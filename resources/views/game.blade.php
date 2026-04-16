@@ -42,11 +42,11 @@
 @if($game['currentPlayer'] === 0)
 <form method="POST" action="/pickup">
     @csrf
-    <button>Pacelt čupu</button>
+    <button>Pacelt kavu</button>
 </form>
 @endif
 
-<h2>Čupa:</h2>
+<h2>Kava:</h2>
 
 <div style="position: relative; width:120px; height:160px;">
     @foreach($game['pile'] as $index => $card)
@@ -70,7 +70,7 @@
     @endforeach
 </div>
 
-<h2>Visible kārtis:</h2>
+<h2>Redzamās kārtis:</h2>
 
 <div>
     @foreach($game['players'][0]['tableVisible'] as $card)
