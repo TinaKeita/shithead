@@ -7,6 +7,34 @@ use App\Models\Player;
 
 class GameService
 {
+    /**
+     * Pārbauda, vai izvēlēto kārti drīkst likt uz galda.
+     * Ja pēdējā kārts ir 6, var likt jebkuru kārti.
+     * Citādi jāievēro standarta noteikumi (piemēram, jābūt vienādai vai augstākai).
+     *
+     * @param Card $cardToPlay
+     * @param array $pile
+     * @return bool
+     */
+    public function canPlayCard(Card $cardToPlay, array $pile): bool
+    {
+        // Ja kaudzē nav nevienas kārts, var likt jebkuru
+        if (empty($pile)) {
+            return true;
+        }
+
+        /** @var Card $topCard */
+        $topCard = end($pile);
+
+        // Ja pēdējā kārts ir 6, var likt jebkuru
+        if ($topCard->value === '6') {
+            return true;
+        }
+
+        // Standarta noteikums: jābūt vienādai vai augstākai
+        return $cardToPlay->rank >= $topCard->rank;
+    }
+
     public function startGame($playerCount)
     {
         $deck = $this->createDeck();
