@@ -50,13 +50,16 @@ class GameController extends Controller
         return redirect('/game');
     }
 
-    // ai gājiens kad netiek veikts cilvēka gājiens
     public function game()
     {
         $game = session('game');
 
-        if ($game['currentPlayer'] !== 0 && request()->has('ai')) {
-            $this->aiMove($game);
+        if (!isset($game['reversed'])) {
+            $game['reversed'] = false;
+        }
+
+        if ($game['currentPlayer'] !== 0 && request()->has('pretinieks')) {
+            $this->pretinieksMove($game);
             $game['currentPlayer'] = ($game['currentPlayer'] + 1) % count($game['players']);
             session(['game' => $game]);
             return redirect('/game');
@@ -69,11 +72,15 @@ class GameController extends Controller
     {
         $game = session('game');
 
+        if (!isset($game['reversed'])) {
+            $game['reversed'] = false;
+        }
+
         if ($game['currentPlayer'] !== 0) {
             return redirect('/game');
         }
 
-        $source = $request->source; // hand / visible
+        $source = $request->input('source', 'hand'); // hand / visible / hidden
         $index = $request->card;
 
         $player = &$game['players'][0];
@@ -104,27 +111,46 @@ class GameController extends Controller
         // Ja spēlē hidden kārti, pārbaudi derīgumu pēc atklāšanas
         if ($source === 'hidden') {
             $valid = true;
-            if ($lastCard && $lastCard['value'] !== '6' && $card['rank'] < $lastCard['rank'] && $card['value'] !== '6' && $card['value'] !== '10') {
-                $valid = false;
+            if ($lastCard) {
+                $isSpecial = in_array($card['value'], ['6', '10']);
+                if ($game['reversed']) {
+                    if (!$isSpecial && $card['rank'] > $lastCard['rank']) {
+                        $valid = false;
+                    }
+                } else {
+                    if ($lastCard['value'] !== '6' && !$isSpecial && $card['rank'] < $lastCard['rank']) {
+                        $valid = false;
+                    }
+                }
             }
             if (!$valid) {
+                if (isset($player['tableHidden'][$index])) {
+                    unset($player['tableHidden'][$index]);
+                    $player['tableHidden'] = array_values($player['tableHidden']);
+                }
                 // Pievieno hidden kārti čupai un paceļ visu čupu
                 $game['pile'][] = $card;
                 $player['hand'] = array_merge($player['hand'], $game['pile']);
                 $game['pile'] = [];
+                $game['reversed'] = false;
+                session()->flash('message', 'Nevar izmantot šo kārti!');
                 session(['game' => $game]);
                 return redirect('/game');
             }
         } else {
-            // Ja pēdējā kārts ir 6, var likt jebkuru kārti
-            if (
-                $lastCard &&
-                $lastCard['value'] !== '6' &&
-                $card['rank'] < $lastCard['rank'] &&
-                $card['value'] !== '6' &&
-                $card['value'] !== '10'
-            ) {
-                return redirect('/game');
+            if ($lastCard) {
+                $isSpecial = in_array($card['value'], ['6', '10']);
+                if ($game['reversed']) {
+                    if (!$isSpecial && $card['rank'] > $lastCard['rank']) {
+                        session()->flash('message', 'Nevar izmantot šo kārti!');
+                        return redirect('/game');
+                    }
+                } else {
+                    if ($lastCard['value'] !== '6' && !$isSpecial && $card['rank'] < $lastCard['rank']) {
+                        session()->flash('message', 'Nevar izmantot šo kārti!');
+                        return redirect('/game');
+                    }
+                }
             }
         }
 
@@ -186,17 +212,17 @@ class GameController extends Controller
 
         if ($value === '10') {
             $game['pile'] = [];
+            $game['reversed'] = false;
             session()->flash('message', '10 = čupa norakta!');
         }
 
-        // Ja uzliek 6, nonullē kavu un paziņo
         if ($value === '6') {
-            $game['pile'] = [];
-            session()->flash('message', '6 = čupa nonullēta!');
+            $game['reversed'] = true;
         }
 
         if ($this->checkFourSame($game['pile'])) {
             $game['pile'] = [];
+            $game['reversed'] = false;
             session()->flash('message', '4 vienādas!');
         }
 
@@ -213,6 +239,10 @@ class GameController extends Controller
     {
         $game = session('game');
 
+        if (!isset($game['reversed'])) {
+            $game['reversed'] = false;
+        }
+
         if ($game['currentPlayer'] !== 0) {
             return redirect('/game');
         }
@@ -221,6 +251,7 @@ class GameController extends Controller
 
         $player['hand'] = array_merge($player['hand'], $game['pile']);
         $game['pile'] = [];
+        $game['reversed'] = false;
 
         $this->drawCards($game, 0);
 
@@ -231,8 +262,12 @@ class GameController extends Controller
         return redirect('/game');
     }
 
-    private function aiMove(&$game)
+    private function pretinieksMove(&$game)
     {
+        if (!isset($game['reversed'])) {
+            $game['reversed'] = false;
+        }
+
         $playerIndex = $game['currentPlayer'];
         $player = &$game['players'][$playerIndex];
 
@@ -245,7 +280,7 @@ class GameController extends Controller
 
             if (
                 !$lastCard ||
-                $card['rank'] >= $lastCard['rank'] ||
+                ($game['reversed'] ? $card['rank'] <= $lastCard['rank'] : $card['rank'] >= $lastCard['rank']) ||
                 $card['value'] === '6' ||
                 $card['value'] === '10'
             ) {
@@ -268,12 +303,18 @@ class GameController extends Controller
 
                 if ($value === '10') {
                     $game['pile'] = [];
-                    session()->flash('message', 'AI 10!');
+                    $game['reversed'] = false;
+                    session()->flash('message', 'Pretinieks 10!');
+                }
+
+                if ($value === '6') {
+                    $game['reversed'] = true;
                 }
 
                 if ($this->checkFourSame($game['pile'])) {
                     $game['pile'] = [];
-                    session()->flash('message', 'AI 4 vienādas!');
+                    $game['reversed'] = false;
+                    session()->flash('message', 'Pretinieks 4 vienādas!');
                 }
 
                 $played = true;
@@ -285,7 +326,8 @@ class GameController extends Controller
         if (!$played) {
             $player['hand'] = array_merge($player['hand'], $pile);
             $game['pile'] = [];
-            session()->flash('message', 'AI paceļ kaudzi!');
+            $game['reversed'] = false;
+            session()->flash('message', 'Pretinieks paceļ kaudzi!');
         }
 
         $this->drawCards($game, $playerIndex);

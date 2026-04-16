@@ -2,11 +2,11 @@
 
 
 @if(session('message'))
-    @if(session('message') === 'AI paceļ kaudzi!')
-        <div id="ai-popup" style="position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:2000;">
+    @if(session('message') === 'Pretinieks paceļ kaudzi!')
+        <div id="pretinieks-popup" style="position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:2000;">
             <div style="background:#fff; border-radius:10px; padding:24px 32px; box-shadow:0 12px 30px rgba(0,0,0,0.2); text-align:center;">
-                <h2 style="margin-bottom:16px;">AI paceļ kārtis!</h2>
-                <button onclick="document.getElementById('ai-popup').style.display='none'" style="padding:10px 22px; border-radius:6px; background:#2aa12a; color:#fff; border:none; font-size:16px; cursor:pointer;">Labi</button>
+                <h2 style="margin-bottom:16px;">Pretinieks paceļ kārtis!</h2>
+                <button onclick="document.getElementById('pretinieks-popup').style.display='none'" style="padding:10px 22px; border-radius:6px; background:#2aa12a; color:#fff; border:none; font-size:16px; cursor:pointer;">Labi</button>
             </div>
         </div>
     @else
@@ -15,14 +15,14 @@
 @endif
 
 <h3>Deck: {{ count($game['deck']) }}</h3>
-<h3>AI kārtis: {{ count($game['players'][1]['hand'] ?? []) }}</h3>
+<h3>Pretinieka kārtis: {{ count($game['players'][1]['hand'] ?? []) }}</h3>
 
 @if($game['currentPlayer'] !== 0)
-    <h2>AI domā...</h2>
+    <h2>Pretinieks domā...</h2>
 
     <script>
         setTimeout(() => {
-            window.location.href = "/game?ai=1";
+            window.location.href = "/game?pretinieks=1";
         }, 3000);
     </script>
 @endif
@@ -39,6 +39,7 @@
 
         <form method="POST" action="/play" style="display:inline;">
             @csrf
+            <input type="hidden" name="source" value="hand">
             <input type="hidden" name="card" value="{{ $index }}">
             <input type="hidden" name="play_count" value="1">
 
@@ -65,12 +66,15 @@
         @if(count($game['players'][0]['tableVisible']) > 0)
             <h3>Redzamās kārtis:</h3>
             @foreach($game['players'][0]['tableVisible'] as $index => $card)
+                @php
+                    $sameCountVisible = collect($game['players'][0]['tableVisible'])->where('value', $card['value'])->count();
+                @endphp
                 <form method="POST" action="/play" style="display:inline;">
                     @csrf
                     <input type="hidden" name="card" value="{{ $index }}">
                     <input type="hidden" name="play_count" value="1">
                     <input type="hidden" name="source" value="visible">
-                    <button style="border:none; background:none;">
+                    <button style="border:none; background:none;" onclick="return openPlayPopup(this, {{ $sameCountVisible }});">
                         <img src="{{ asset('cards/' . $card['suit'] . '_' . $card['value'] . '.png') }}" width="80">
                     </button>
                 </form>
@@ -157,7 +161,7 @@
 @if(!is_null($winner))
     <div style="position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:3000;">
         <div style="background:#fff; border-radius:10px; padding:32px 40px; box-shadow:0 12px 30px rgba(0,0,0,0.2); text-align:center;">
-            <h2>Uzvarētājs: {{ $winner === 0 ? 'Tu' : 'AI' }}</h2>
+            <h2>Uzvarētājs: {{ $winner === 0 ? 'Tu' : 'Pretinieks' }}</h2>
             <a href="/" style="display:inline-block; margin-top:18px; padding:10px 22px; border-radius:6px; background:#2aa12a; color:#fff; border:none; font-size:16px; text-decoration:none;">Jauna spēle</a>
         </div>
     </div>
