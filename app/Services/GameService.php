@@ -67,7 +67,6 @@ class GameService
             'deck' => $deck,
             'pile' => [],
             'currentPlayer' => rand(0, $playerCount - 1),
-            'reversed' => false,
         ];
     }
 

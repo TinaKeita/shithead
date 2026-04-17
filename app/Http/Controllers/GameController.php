@@ -58,9 +58,6 @@ class GameController extends Controller
             return redirect('/login');
         }
         $game = session('game');
-        if (!isset($game['reversed'])) {
-            $game['reversed'] = false;
-        }
         if ($game['currentPlayer'] !== 0 && request()->has('pretinieks')) {
             $this->pretinieksMove($game);
             $game['currentPlayer'] = ($game['currentPlayer'] + 1) % count($game['players']);
@@ -76,10 +73,6 @@ class GameController extends Controller
             return redirect('/login');
         }
         $game = session('game');
-
-        if (!isset($game['reversed'])) {
-            $game['reversed'] = false;
-        }
 
         if ($game['currentPlayer'] !== 0) {
             return redirect('/game');
@@ -134,16 +127,8 @@ class GameController extends Controller
             $valid = true;
             if ($lastCard) {
                 $isSpecial = in_array($card['value'], ['6', '10']);
-                if (!$fourSame) {
-                    if ($game['reversed']) {
-                        if (!$isSpecial && $card['rank'] < $lastCard['rank']) {
-                            $valid = false;
-                        }
-                    } else {
-                        if ($lastCard['value'] !== '6' && !$isSpecial && $card['rank'] < $lastCard['rank']) {
-                            $valid = false;
-                        }
-                    }
+                if (!$fourSame && $lastCard['value'] !== '6' && !$isSpecial && $card['rank'] < $lastCard['rank']) {
+                    $valid = false;
                 }
             }
             if (!$valid) {
@@ -155,7 +140,6 @@ class GameController extends Controller
                 $game['pile'][] = $card;
                 $player['hand'] = array_merge($player['hand'], $game['pile']);
                 $game['pile'] = [];
-                $game['reversed'] = false;
                 session()->flash('message', 'Nevar izmantot šo kārti!');
                 session(['game' => $game]);
                 return redirect('/game');
@@ -163,18 +147,9 @@ class GameController extends Controller
         } else {
             if ($lastCard) {
                 $isSpecial = in_array($card['value'], ['6', '10']);
-                if (!$fourSame) {
-                    if ($game['reversed']) {
-                        if (!$isSpecial && $card['rank'] < $lastCard['rank']) {
-                            session()->flash('message', 'Nevar izmantot šo kārti!');
-                            return redirect('/game');
-                        }
-                    } else {
-                        if ($lastCard['value'] !== '6' && !$isSpecial && $card['rank'] < $lastCard['rank']) {
-                            session()->flash('message', 'Nevar izmantot šo kārti!');
-                            return redirect('/game');
-                        }
-                    }
+                if (!$fourSame && $lastCard['value'] !== '6' && !$isSpecial && $card['rank'] < $lastCard['rank']) {
+                    session()->flash('message', 'Nevar izmantot šo kārti!');
+                    return redirect('/game');
                 }
             }
         }
@@ -237,17 +212,11 @@ class GameController extends Controller
 
         if ($value === '10') {
             $game['pile'] = [];
-            $game['reversed'] = false;
             session()->flash('message', '10 = čupa norakta!');
-        }
-
-        if ($value === '6') {
-            $game['reversed'] = true;
         }
 
         if ($this->checkFourSame($game['pile'])) {
             $game['pile'] = [];
-            $game['reversed'] = false;
             session()->flash('message', '4 vienādas!');
         }
 
@@ -280,10 +249,6 @@ class GameController extends Controller
         }
         $game = session('game');
 
-        if (!isset($game['reversed'])) {
-            $game['reversed'] = false;
-        }
-
         if ($game['currentPlayer'] !== 0) {
             return redirect('/game');
         }
@@ -292,7 +257,6 @@ class GameController extends Controller
 
         $player['hand'] = array_merge($player['hand'], $game['pile']);
         $game['pile'] = [];
-        $game['reversed'] = false;
 
         $this->drawCards($game, 0);
 
@@ -305,10 +269,6 @@ class GameController extends Controller
 
     private function pretinieksMove(&$game)
     {
-        if (!isset($game['reversed'])) {
-            $game['reversed'] = false;
-        }
-
         $playerIndex = $game['currentPlayer'];
         $player = &$game['players'][$playerIndex];
 
@@ -342,13 +302,10 @@ class GameController extends Controller
                 $canPlay = true;
             } elseif ($fourSame) {
                 $canPlay = true;
+            } elseif ($lastCard['value'] === '6') {
+                $canPlay = true;
             } elseif ($isSpecial) {
                 $canPlay = true;
-            } elseif ($game['reversed']) {
-                // reversed: drīkst tikai vienādas vai mazākas
-                if ($card['rank'] <= $lastCard['rank']) {
-                    $canPlay = true;
-                }
             } else {
                 // parasti: drīkst tikai vienādas vai lielākas
                 if ($card['rank'] >= $lastCard['rank']) {
@@ -371,17 +328,11 @@ class GameController extends Controller
 
                 if ($value === '10') {
                     $game['pile'] = [];
-                    $game['reversed'] = false;
                     session()->flash('message', 'Pretinieks 10!');
-                }
-
-                if ($value === '6') {
-                    $game['reversed'] = true;
                 }
 
                 if ($this->checkFourSame($game['pile'])) {
                     $game['pile'] = [];
-                    $game['reversed'] = false;
                     session()->flash('message', 'Pretinieks 4 vienādas!');
                 }
 
@@ -394,7 +345,6 @@ class GameController extends Controller
         if (!$played) {
             $player['hand'] = array_merge($player['hand'], $pile);
             $game['pile'] = [];
-            $game['reversed'] = false;
             session()->flash('message', 'Pretinieks paceļ kaudzi!');
         }
 
