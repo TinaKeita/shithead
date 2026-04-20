@@ -11,6 +11,7 @@ return new class extends Migration {
         Schema::create('scores', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->unsignedTinyInteger('player_count')->default(2);
             $table->integer('score');
             $table->timestamps();
         });

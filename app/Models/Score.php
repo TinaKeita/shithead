@@ -4,9 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+
 class Score extends Model
 {
-    protected $fillable = ['user_id', 'score'];
+    protected $fillable = ['user_id', 'score', 'player_count'];
 
     public function user()
     {

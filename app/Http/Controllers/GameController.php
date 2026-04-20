@@ -226,12 +226,10 @@ class GameController extends Controller
         $isWinner = empty($player['hand']) && empty($player['tableVisible']) && empty($player['tableHidden']);
         $playersCount = isset($game['players']) ? count($game['players']) : 2;
         if (\Auth::check()) {
-            $score = count($game['pile']) + count($game['deck']);
             \App\Models\Score::create([
                 'user_id' => \Auth::id(),
-                'score' => $score,
-                'win' => $isWinner,
-                'players_count' => $playersCount,
+                'score' => $isWinner ? 1 : 0,
+                'player_count' => $playersCount,
             ]);
         }
 

@@ -16,6 +16,16 @@
             <div class="top-actions">
                 <span class="pill">Spēlētāji: {{ count($game['players']) }}</span>
                 <a href="/" class="button secondary">Atpakaļ</a>
+                <a href="/highscores" class="button secondary">Highscore</a>
+                @auth
+                    <span class="pill">Ielogojies kā: {{ auth()->user()->name }}</span>
+                    <form method="POST" action="/logout" style="display:inline;">
+                        @csrf
+                        <button type="submit" class="button secondary">Izlogoties</button>
+                    </form>
+                @else
+                    <a href="/login" class="button secondary">Ielogoties</a>
+                @endauth
             </div>
         </div>
 
@@ -97,6 +107,13 @@
                             <button type="submit" class="button">Pacelt čupu</button>
                         </form>
                         <a href="/" class="button secondary">Jauna spēle</a>
+                        {{-- Noņemam pogu "Ņemt redzamo kārti". Redzamās kārtis būs spēlējamas tieši zemāk --}}
+                        @if($game['currentPlayer'] === 0 && count($game['players'][0]['hand']) === 0 && count($game['deck']) === 0 && count($game['players'][0]['tableVisible']) === 0 && count($game['players'][0]['tableHidden']) > 0)
+                            <form method="POST" action="/pickup-hidden" style="display:inline;">
+                                @csrf
+                                <button type="submit" class="button">Ņemt slēpto kārti</button>
+                            </form>
+                        @endif
                     </div>
 
                     <div class="status-pill">
@@ -113,11 +130,25 @@
             <div class="mini-panel">
                 <h3>Redzamās kārtis</h3>
                 <div class="cards-row">
-                    @forelse($game['players'][0]['tableVisible'] as $card)
-                        <img src="{{ asset('cards/' . $card['suit'] . '_' . $card['value'] . '.png') }}" width="84" alt="{{ $card['value'] }}">
-                    @empty
-                        <p class="muted">Nav redzamu kāršu</p>
-                    @endforelse
+                    @if($game['currentPlayer'] === 0 && count($game['players'][0]['hand']) === 0 && count($game['deck']) === 0 && count($game['players'][0]['tableVisible']) > 0)
+                        @foreach($game['players'][0]['tableVisible'] as $index => $card)
+                            <form method="POST" action="/play" class="card-button">
+                                @csrf
+                                <input type="hidden" name="source" value="visible">
+                                <input type="hidden" name="card" value="{{ $index }}">
+                                <input type="hidden" name="play_count" value="1">
+                                <button type="submit" class="card-button">
+                                    <img src="{{ asset('cards/' . $card['suit'] . '_' . $card['value'] . '.png') }}" width="84" alt="{{ $card['value'] }}">
+                                </button>
+                            </form>
+                        @endforeach
+                    @else
+                        @forelse($game['players'][0]['tableVisible'] as $card)
+                            <img src="{{ asset('cards/' . $card['suit'] . '_' . $card['value'] . '.png') }}" width="84" alt="{{ $card['value'] }}">
+                        @empty
+                            <p class="muted">Nav redzamu kāršu</p>
+                        @endforelse
+                    @endif
                 </div>
             </div>
 
@@ -169,6 +200,7 @@
                 <p>{{ $winner === 0 ? 'Tu uzvarēji!' : 'Pretinieks uzvarēja!' }}</p>
                 <div class="modal-actions">
                     <a href="/" class="button">Sākt jaunu spēli</a>
+                    <a href="/highscores" class="button secondary">Skatīt rezultātu lapu</a>
                 </div>
             </div>
         </div>
