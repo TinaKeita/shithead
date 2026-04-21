@@ -35,38 +35,6 @@
             </div>
         @endif
 
-        <div class="stats-grid">
-            <div class="panel">
-                <h2>Deck</h2>
-                <p>{{ count($game['deck']) }} kārtis</p>
-            </div>
-            <div class="panel">
-                <h2>Pretinieks</h2>
-                <div class="content">
-                    {{-- Pretinieka roka: tikai skaits --}}
-                    <div class="cards-row" style="margin-bottom:6px;">
-                        <span class="status-pill">Rokā: {{ count($game['players'][1]['hand'] ?? []) }}</span>
-                    </div>
-                    {{-- Pretinieka redzamās kārtis (viena rinda, max 3) --}}
-                    <div class="cards-row" style="margin-bottom:6px;">
-                        @foreach(array_slice($game['players'][1]['tableVisible'] ?? [], 0, 3) as $card)
-                            <img src="{{ asset('cards/' . $card['suit'] . '_' . $card['value'] . '.png') }}" width="90" alt="{{ $card['value'] }}">
-                        @endforeach
-                    </div>
-                    {{-- Pretinieka slēptās kārtis (viena rinda, max 3) --}}
-                    <div class="cards-row">
-                        @foreach(array_slice($game['players'][1]['tableHidden'] ?? [], 0, 3) as $card)
-                            <img src="{{ asset('cards/back_dark.png') }}" width="90" alt="Slēptā kārts">
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-            <div class="panel">
-                <h2>Gājiens</h2>
-                <p>{{ $game['currentPlayer'] === 0 ? 'Tavs gājiens' : 'Pretinieks domā...' }}</p>
-            </div>
-        </div>
-
         @if($game['currentPlayer'] !== 0)
             <script>
                 setTimeout(() => {
@@ -155,6 +123,38 @@
                         <span>Redzamās</span> {{ count($game['players'][0]['tableVisible']) }}
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="panel">
+                <h2>Deck</h2>
+                <p>{{ count($game['deck']) }} kārtis</p>
+            </div>
+            <div class="panel">
+                <h2>Pretinieks</h2>
+                <div class="content">
+                    {{-- Pretinieka roka: tikai skaits --}}
+                    <div class="cards-row" style="margin-bottom:6px;">
+                        <span class="status-pill">Rokā: {{ count($game['players'][1]['hand'] ?? []) }}</span>
+                    </div>
+                    {{-- Pretinieka redzamās kārtis (viena rinda, max 3) --}}
+                    <div class="cards-row" style="margin-bottom:6px;">
+                        @foreach(array_slice($game['players'][1]['tableVisible'] ?? [], 0, 3) as $card)
+                            <img src="{{ asset('cards/' . $card['suit'] . '_' . $card['value'] . '.png') }}" width="90" alt="{{ $card['value'] }}">
+                        @endforeach
+                    </div>
+                    {{-- Pretinieka slēptās kārtis (viena rinda, max 3) --}}
+                    <div class="cards-row">
+                        @foreach(array_slice($game['players'][1]['tableHidden'] ?? [], 0, 3) as $card)
+                            <img src="{{ asset('cards/back_dark.png') }}" width="90" alt="Slēptā kārts">
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            <div class="panel">
+                <h2>Gājiens</h2>
+                <p>{{ $game['currentPlayer'] === 0 ? 'Tavs gājiens' : 'Pretinieks domā...' }}</p>
             </div>
         </div>
 
