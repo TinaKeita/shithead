@@ -123,35 +123,31 @@ class GameController extends Controller
             }
         }
 
-        if ($source === 'hidden') {
-            $valid = true;
-            if ($lastCard) {
-                $isSpecial = in_array($card['value'], ['6', '10']);
-                if (!$fourSame && $lastCard['value'] !== '6' && !$isSpecial && $card['rank'] < $lastCard['rank']) {
-                    $valid = false;
-                }
+        $valid = true;
+        if ($lastCard) {
+            $isSpecial = in_array($card['value'], ['6', '10']);
+            // Atļaut, ja:
+            // - 4 vienādas
+            // - uz 6 jebkuru
+            // - 10
+            // - tāda pati vērtība
+            // - lielāka rank
+            if (!$fourSame && $lastCard['value'] !== '6' && !$isSpecial && ($card['rank'] < $lastCard['rank'] && $card['value'] !== $lastCard['value'])) {
+                $valid = false;
             }
-            if (!$valid) {
-                if (isset($player['tableHidden'][$index])) {
-                    unset($player['tableHidden'][$index]);
-                    $player['tableHidden'] = array_values($player['tableHidden']);
-                }
-                // Pievieno hidden kārti čupai un paceļ visu čupu
-                $game['pile'][] = $card;
-                $player['hand'] = array_merge($player['hand'], $game['pile']);
-                $game['pile'] = [];
-                session()->flash('message', 'Nevar izmantot šo kārti!');
-                session(['game' => $game]);
-                return redirect('/game');
+        }
+        if (!$valid) {
+            if ($source === 'hidden' && isset($player['tableHidden'][$index])) {
+                unset($player['tableHidden'][$index]);
+                $player['tableHidden'] = array_values($player['tableHidden']);
             }
-        } else {
-            if ($lastCard) {
-                $isSpecial = in_array($card['value'], ['6', '10']);
-                if (!$fourSame && $lastCard['value'] !== '6' && !$isSpecial && $card['rank'] < $lastCard['rank']) {
-                    session()->flash('message', 'Nevar izmantot šo kārti!');
-                    return redirect('/game');
-                }
-            }
+            // Pievieno hidden kārti čupai un paceļ visu čupu
+            $game['pile'][] = $card;
+            $player['hand'] = array_merge($player['hand'], $game['pile']);
+            $game['pile'] = [];
+            session()->flash('message', 'Nevar izmantot šo kārti!');
+            session(['game' => $game]);
+            return redirect('/game');
         }
 
         $value = $card['value'];
@@ -209,31 +205,36 @@ class GameController extends Controller
 
         $game['pile'] = array_merge($game['pile'], $toPlay);
 
+        $extraTurn = false;
 
         if ($value === '10') {
             $game['pile'] = [];
             session()->flash('message', '10 = čupa norakta!');
+            $extraTurn = true;
         }
 
         if ($this->checkFourSame($game['pile'])) {
             $game['pile'] = [];
             session()->flash('message', '4 vienādas!');
+            $extraTurn = true;
         }
 
         $this->drawCards($game, 0);
 
-        // Saglabā rezultātu pie lietotāja (uzvara/zaudējums, pretinieku skaits)
+        // Atjaunina tikai users tabulas laukus
         $isWinner = empty($player['hand']) && empty($player['tableVisible']) && empty($player['tableHidden']);
-        $playersCount = isset($game['players']) ? count($game['players']) : 2;
         if (\Auth::check()) {
-            \App\Models\Score::create([
-                'user_id' => \Auth::id(),
-                'score' => $isWinner ? 1 : 0,
-                'player_count' => $playersCount,
-            ]);
+            $user = \App\Models\User::find(\Auth::id());
+            $user->games_played += 1;
+            if ($isWinner) {
+                $user->games_won += 1;
+            }
+            $user->save();
         }
 
-        $game['currentPlayer'] = ($game['currentPlayer'] + 1) % count($game['players']);
+        if (!$extraTurn) {
+            $game['currentPlayer'] = ($game['currentPlayer'] + 1) % count($game['players']);
+        }
 
         session(['game' => $game]);
 

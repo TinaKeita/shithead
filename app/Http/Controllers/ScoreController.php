@@ -9,7 +9,7 @@ class ScoreController extends Controller
 {
     public function index()
     {
-        $scores = Score::with('user')->orderByDesc('score')->limit(20)->get();
-        return view('highscores', compact('scores'));
+        // No scores table, just show the highscores view (it will use users table for stats)
+        return view('highscores');
     }
 }

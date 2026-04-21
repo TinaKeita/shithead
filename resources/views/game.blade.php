@@ -42,7 +42,24 @@
             </div>
             <div class="panel">
                 <h2>Pretinieks</h2>
-                <p>{{ count($game['players'][1]['hand'] ?? []) }} kārtis rokā</p>
+                <div class="content">
+                    {{-- Pretinieka roka: tikai skaits --}}
+                    <div class="cards-row" style="margin-bottom:6px;">
+                        <span class="status-pill">Rokā: {{ count($game['players'][1]['hand'] ?? []) }}</span>
+                    </div>
+                    {{-- Pretinieka redzamās kārtis (viena rinda, max 3) --}}
+                    <div class="cards-row" style="margin-bottom:6px;">
+                        @foreach(array_slice($game['players'][1]['tableVisible'] ?? [], 0, 3) as $card)
+                            <img src="{{ asset('cards/' . $card['suit'] . '_' . $card['value'] . '.png') }}" width="90" alt="{{ $card['value'] }}">
+                        @endforeach
+                    </div>
+                    {{-- Pretinieka slēptās kārtis (viena rinda, max 3) --}}
+                    <div class="cards-row">
+                        @foreach(array_slice($game['players'][1]['tableHidden'] ?? [], 0, 3) as $card)
+                            <img src="{{ asset('cards/back_dark.png') }}" width="90" alt="Slēptā kārts">
+                        @endforeach
+                    </div>
+                </div>
             </div>
             <div class="panel">
                 <h2>Gājiens</h2>
@@ -70,6 +87,7 @@
                     </div>
                     @if(count($game['pile']) > 0)
                         <p class="muted">Augšējā kārts: <strong>{{ end($game['pile'])['value'] }}</strong></p>
+                        <p class="muted">Kavas kārtis: <strong>{{ count($game['pile']) }}</strong></p>
                     @else
                         <p class="muted">Kava ir tukša</p>
                     @endif
@@ -82,14 +100,28 @@
                     <p class="muted">Noklikšķini uz kārts, lai spēlētu.</p>
                     <div class="cards-row">
                         @if($game['currentPlayer'] === 0)
-                            @foreach($game['players'][0]['hand'] as $index => $card)
+                            @php
+                                $hand = $game['players'][0]['hand'];
+                                $sortedHand = collect($hand)->sortBy(function($c) { return $c['rank'] ?? 0; });
+                                $usedHandIndexes = [];
+                            @endphp
+                            @foreach($sortedHand as $handIndex => $card)
                                 @php
-                                    $sameCount = collect($game['players'][0]['hand'])->where('value', $card['value'])->count();
+                                    // Atrodi nākamo neatkārtoto indeksu sākotnējā rokā
+                                    $realIndex = null;
+                                    foreach ($hand as $i => $hCard) {
+                                        if ($hCard == $card && !in_array($i, $usedHandIndexes, true)) {
+                                            $realIndex = $i;
+                                            $usedHandIndexes[] = $i;
+                                            break;
+                                        }
+                                    }
+                                    $sameCount = $sortedHand->where('value', $card['value'])->count();
                                 @endphp
                                 <form method="POST" action="/play" class="card-button">
                                     @csrf
                                     <input type="hidden" name="source" value="hand">
-                                    <input type="hidden" name="card" value="{{ $index }}">
+                                    <input type="hidden" name="card" value="{{ $realIndex }}">
                                     <input type="hidden" name="play_count" value="1">
                                     <button type="submit" class="card-button" onclick="return openPlayPopup(this, {{ $sameCount }});">
                                         <img src="{{ asset('cards/' . $card['suit'] . '_' . $card['value'] . '.png') }}" width="90" alt="{{ $card['value'] }} {{ $card['suit'] }}">

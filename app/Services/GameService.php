@@ -31,8 +31,8 @@ class GameService
             return true;
         }
 
-        // Standarta noteikums: jābūt vienādai vai augstākai
-        return $cardToPlay->rank >= $topCard->rank;
+        // Standarta noteikums: jābūt vienādai vērtībai vai augstākai
+        return $cardToPlay->value === $topCard->value || $cardToPlay->rank >= $topCard->rank;
     }
 
     public function startGame($playerCount)
