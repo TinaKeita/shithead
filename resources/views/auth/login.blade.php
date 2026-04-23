@@ -145,11 +145,6 @@
         <form method="POST" action="/login" class="auth-form">
             @csrf
             <div class="form-group">
-                <label for="name">Lietotājvārds</label>
-                <input type="text" name="name" id="name" placeholder="Ievadi lietotājvārdu" required value="{{ old('name') }}">
-            </div>
-
-            <div class="form-group">
                 <label for="email">E-pasts</label>
                 <input type="email" name="email" id="email" placeholder="Ievadi e-pastu" required value="{{ old('email') }}">
             </div>

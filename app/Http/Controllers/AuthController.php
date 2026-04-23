@@ -21,12 +21,17 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->only('name', 'email', 'password');
-        if (Auth::attempt(['name' => $credentials['name'], 'email' => $credentials['email'], 'password' => $credentials['password']])) {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (Auth::attempt($request->only('email', 'password'))) {
             $request->session()->regenerate();
             return redirect('/');
         }
-        return back()->withErrors(['name' => 'Nepareizs lietotājvārds, e-pasts vai parole!']);
+
+        return back()->withErrors(['email' => 'Nepareizs e-pasts vai parole!']);
     }
 
     public function register(Request $request)

@@ -27,23 +27,52 @@
             </div>
         </div>
 
-        @php
-            $userGames = 0;
-            $userWins = 0;
-            if (Auth::check()) {
-                $userGames = Auth::user()->games_played;
-                $userWins = Auth::user()->games_won;
-            }
-        @endphp
-
         @auth
-        <div class="panel" style="max-width:400px;margin:0 auto 32px auto;text-align:center;">
+        <div class="panel stats-panel">
             <h2>Tava statistika</h2>
-            <p style="font-size:1.3rem;margin:18px 0 0 0;">
-                <b>Tu esi uzvarējis {{ $userWins }} no {{ $userGames }} spēlēm.</b>
+            <p class="stat-value">
+                <b>Uzvaras:</b> {{ $currentUserStats['games_won'] }}
+                <br>
+                <b>Zaudējumi:</b> {{ $currentUserStats['games_lost'] }}
+                <br>
+                <b>Kopā spēles:</b> {{ $currentUserStats['games_played'] }}
+            </p>
+            <p class="stat-place">
+                <b>Tava vieta:</b> #{{ $currentUserPlace ?? '—' }}
             </p>
         </div>
         @endauth
+
+        <div class="panel leaderboard-panel">
+            <h2>Top spēlētāji</h2>
+            <div class="table-wrap">
+                <table class="highscore-table">
+                    <thead>
+                        <tr>
+                            <th>Vieta</th>
+                            <th>Spēlētājs</th>
+                            <th>Uzvaras</th>
+                            <th>Zaudējumi</th>
+                            <th>Spēles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($leaders as $index => $user)
+                            @php
+                                $losses = max(0, $user->games_played - $user->games_won);
+                            @endphp
+                            <tr class="{{ Auth::check() && Auth::id() === $user->id ? 'highlight-row' : '' }}">
+                                <td class="rank">{{ $index + 1 }}</td>
+                                <td>{{ $user->name }}</td>
+                                <td>{{ $user->games_won }}</td>
+                                <td>{{ $losses }}</td>
+                                <td>{{ $user->games_played }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </body>
 </html>

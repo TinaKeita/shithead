@@ -232,7 +232,72 @@ body::before {
 .action-panel form {
     margin: 0;
 }
+.stats-panel {
+    max-width: 460px;
+    margin: 0 auto 32px auto;
+    text-align: center;
+}
 
+.stats-panel .stat-value,
+.stats-panel .stat-place {
+    font-size: 1.05rem;
+    margin: 0.8rem 0 0 0;
+    line-height: 1.8;
+    color: var(--text);
+}
+
+.leaderboard-panel {
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.table-wrap {
+    overflow-x: auto;
+    margin-top: 16px;
+}
+
+.highscore-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 640px;
+}
+
+.highscore-table thead {
+    background: rgba(45, 212, 191, 0.08);
+}
+
+.highscore-table th,
+.highscore-table td {
+    padding: 18px 20px;
+    text-align: left;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    font-size: 0.95rem;
+}
+
+.highscore-table th {
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+}
+
+.highscore-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.highscore-table tbody tr:hover {
+    background: rgba(14, 165, 233, 0.08);
+}
+
+.highlight-row {
+    background: rgba(45, 212, 191, 0.12);
+    font-weight: 700;
+}
+
+.highscore-table .rank {
+    width: 64px;
+}
 .action-panel .content > p {
     margin: 0 0 18px;
 }
